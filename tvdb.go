@@ -1,4 +1,5 @@
-package main
+// Simple, Sexy and Easy golang module for TheTVDB.
+package tvdb
 
 import (
 	"fmt"
@@ -13,18 +14,32 @@ import (
 )
 
 const (
+	// TheTVDB API key.
 	API_KEY = "DECE3B6B5464C552"
+
+	// URL used to get basic series information by name.
 	GET_SERIES_URL = "http://thetvdb.com/api/GetSeries.php?seriesname=%v"
+
+	// URL used to get basic series information by ID.
 	GET_SERIES_BY_ID_URL = "http://thetvdb.com/api/%v/series/%v/en.xml"
+
+	// URL used to get detailed series/episode information by ID.
 	GET_DETAIL_URL = "http://thetvdb.com/api/%v/series/%v/all/en.xml"
+
+	// URL used for series web searches.
 	SEARCH_SERIES_URL = "http://thetvdb.com/?string=%v&searchseriesid=&tab=listseries&function=Search"
+
+	// URL used for series web search matching.
 	SEARCH_SERIES_REGEX = `(?P<before><a href="/\?tab=series&amp;id=)(?P<seriesId>\d+)(?P<after>\&amp;lid=\d*">)`
 )
 
+// Regex used for series web search matching.
 var SearchSeriesRegex = regexp.MustCompile(SEARCH_SERIES_REGEX)
 
+// Type representing pipe-separated string values.
 type PipeList []string
 
+// Unmarshal an XML element with string value into a pip-separated list of strings.
 func (pipeList *PipeList) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) (err error) {
 	content := ""
 
@@ -37,6 +52,7 @@ func (pipeList *PipeList) UnmarshalXML(decoder *xml.Decoder, start xml.StartElem
 	return
 }
 
+// Episode represents a TV show episode on TheTVDB.
 type Episode struct {
 	Id uint64 `xml:"id"`
 	CombinedEpisodeNumber uint64 `xml:"Combined_episodenumber"`
@@ -69,6 +85,7 @@ type Episode struct {
 	ThumbWidth string `xml:"thumb_width"`
 }
 
+// Series represents TV show on TheTVDB.
 type Series struct {
 	Id uint64 `xml:"id"`
 	Actors PipeList `xml:"Actors"`
@@ -98,14 +115,17 @@ type Series struct {
 	Seasons map[uint64][]Episode
 }
 
+// SeriesList represents a list of TV shows, often used for returning search results.
 type SeriesList struct {
 	Series []Series `xml:"Series"`
 }
 
+// EpisodeList represents a list of TV show episodes.
 type EpisodeList struct {
 	Episodes []Episode `xml:"Episode"`
 }
 
+// Create an initialise a new TV series object from XML data.
 func NewSeries(data []byte) (*Series, error) {
 	series := Series{}
 
@@ -118,6 +138,7 @@ func NewSeries(data []byte) (*Series, error) {
 	return &series, nil
 }
 
+// Get more detail for all TV shows in a list.
 func (seriesList *SeriesList) GetDetail() (err error) {
 	for seriesIndex := range seriesList.Series {
 		if err = seriesList.Series[seriesIndex].GetDetail(); err != nil {
@@ -128,6 +149,7 @@ func (seriesList *SeriesList) GetDetail() (err error) {
 	return
 }
 
+// Get more detail for a TV show, including information on it's episodes.
 func (series *Series) GetDetail() (err error) {
 	response, err := http.Get(fmt.Sprintf(GET_DETAIL_URL, API_KEY, strconv.FormatUint(series.Id, 10)))
 
@@ -162,6 +184,7 @@ func (series *Series) GetDetail() (err error) {
 	return
 }
 
+// Get a list of TV series by name, by performing a simple search.
 func GetSeries(name string) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(GET_SERIES_URL, url.QueryEscape(name)))
 
@@ -180,6 +203,7 @@ func GetSeries(name string) (seriesList SeriesList, err error) {
 	return
 }
 
+// Get a TV series by ID.
 func GetSeriesById(id uint64) (series Series, err error) {
 	response, err := http.Get(fmt.Sprintf(GET_SERIES_BY_ID_URL, API_KEY, id))
 
@@ -210,6 +234,8 @@ func GetSeriesById(id uint64) (series Series, err error) {
 	return
 }
 
+// Search for TV shows by name, using the more sophisticated search on TheTVDB's homepage.
+// This is the recommended search method.
 func SearchSeries(name string) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(SEARCH_SERIES_URL, url.QueryEscape(name)))
 
