@@ -1,4 +1,4 @@
-// Simple, Sexy and Easy golang module for TheTVDB.
+// Simple, sexy and easy golang module for TheTVDB.
 package tvdb
 
 import (

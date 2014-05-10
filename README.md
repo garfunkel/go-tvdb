@@ -1,4 +1,4 @@
 go-tvdb
 =======
 
-Simple, Sexy and Easy golang module for theTVDB.
+Simple, sexy and easy golang module for TheTVDB.
