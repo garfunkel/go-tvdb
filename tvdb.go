@@ -64,7 +64,7 @@ type Episode struct {
 	Director PipeList `xml:"Director"`
 	EpImgFlag string `xml:"EpImgFlag"`
 	EpisodeName string `xml:"EpisodeName"`
-	EpisodeNumber int `xml:"EpisodeNumber"`
+	EpisodeNumber uint64 `xml:"EpisodeNumber"`
 	FirstAired string `xml:"FirstAired"`
 	GuestStars string `xml:"GuestStars"`
 	ImdbId string `xml:"IMDB_ID"`
@@ -236,7 +236,7 @@ func GetSeriesById(id uint64) (series Series, err error) {
 
 // Search for TV shows by name, using the more sophisticated search on TheTVDB's homepage.
 // This is the recommended search method.
-func SearchSeries(name string) (seriesList SeriesList, err error) {
+func SearchSeries(name string, maxResults int) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(SEARCH_SERIES_URL, url.QueryEscape(name)))
 
 	if err != nil {
@@ -250,12 +250,16 @@ func SearchSeries(name string) (seriesList SeriesList, err error) {
 	}
 
 	groups := SearchSeriesRegex.FindAllSubmatch(buf, -1)
+	doneSeriesIds := make(map[uint64]struct{})
 
 	for _, group := range groups {
-		fmt.Println(group)
 		seriesId := uint64(0)
 		series := Series{}
 		seriesId, err = strconv.ParseUint(string(group[2]), 10, 64)
+
+		if _, ok := doneSeriesIds[seriesId]; ok {
+			continue
+		}
 
 		if err != nil {
 			return
@@ -268,6 +272,11 @@ func SearchSeries(name string) (seriesList SeriesList, err error) {
 		}
 
 		seriesList.Series = append(seriesList.Series, series)
+		doneSeriesIds[seriesId] = struct{}{}
+
+		if len(seriesList.Series) == maxResults {
+			break
+		}
 	}
 
 	return
