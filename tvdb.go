@@ -55,7 +55,7 @@ func (pipeList *PipeList) UnmarshalXML(decoder *xml.Decoder, start xml.StartElem
 // Episode represents a TV show episode on TheTVDB.
 type Episode struct {
 	Id uint64 `xml:"id"`
-	CombinedEpisodeNumber uint64 `xml:"Combined_episodenumber"`
+	CombinedEpisodeNumber string `xml:"Combined_episodenumber"`
 	CombinedSeason uint64 `xml:"Combined_season"`
 	DvdChapter string `xml:"DVD_chapter"`
 	DvdDiscId string `xml:"DVD_discid"`
@@ -268,7 +268,13 @@ func SearchSeries(name string, maxResults int) (seriesList SeriesList, err error
 		series, err = GetSeriesById(seriesId)
 
 		if err != nil {
-			return
+			// Some series can't be found, so we will ignore these.
+			if _, ok := err.(*xml.SyntaxError); ok {
+				err = nil
+				continue
+			} else {
+				return
+			}
 		}
 
 		seriesList.Series = append(seriesList.Series, series)
