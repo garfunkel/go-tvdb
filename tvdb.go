@@ -289,7 +289,14 @@ func SearchSeries(name string, maxResults int) (seriesList SeriesList, err error
 		series, err = GetSeriesByID(seriesID)
 
 		if err != nil {
-			continue
+			// Some series can't be found, so we will ignore these.
+			if _, ok := err.(*xml.SyntaxError); ok {
+				err = nil
+
+				continue
+			} else {
+				return
+			}
 		}
 
 		seriesList.Series = append(seriesList.Series, series)
