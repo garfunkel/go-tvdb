@@ -1,0 +1,107 @@
+package tvdb
+
+import (
+	"testing"
+)
+
+// TestGetSeries tests the GetSeries function.
+func TestGetSeries(t *testing.T) {
+	seriesList, err := GetSeries("The Simpsons")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, series := range seriesList.Series {
+		if series.SeriesName == "The Simpsons" {
+			return
+		}
+	}
+
+	t.Error("No 'The Simpsons' title could be found.")
+}
+
+// TestGetSeriesByID tests the GetSeriesByID function.
+func TestGetSeriesByID(t *testing.T) {
+	series, err := GetSeriesByID(71663)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if series.SeriesName != "The Simpsons" {
+		t.Error("ID lookup for '71663' failed.")
+	}
+}
+
+// TestGetSeriesByIMDBID tests the GetSeriesByIMDBID function.
+func TestGetSeriesByIMDBID(t *testing.T) {
+	series, err := GetSeriesByIMDBID("tt0096697")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if series.SeriesName != "The Simpsons" {
+		t.Error("IMDb ID lookup for 'tt0096697' failed.")
+	}
+}
+
+// TestSearchSeries tests the SearchSeries function.
+func TestSearchSeries(t *testing.T) {
+	seriesList, err := SearchSeries("The Simpsons", 5)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, series := range seriesList.Series {
+		if series.SeriesName == "The Simpsons" {
+			return
+		}
+	}
+
+	t.Error("No 'The Simpsons' title could be found.")
+}
+
+// TestSeriesGetDetail tests the Series type's GetDetail function.
+func TestSeriesGetDetail(t *testing.T) {
+	series, err := GetSeriesByID(71663)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if series.Seasons != nil {
+		t.Error("series.Seasons should be nil.")
+	}
+
+	series.GetDetail()
+
+	if series.Seasons == nil {
+		t.Error("series.Seasons should not be nil.")
+	}
+}
+
+// TestSeriesListGetDetail tests the SeriesList type's GetDetail function.
+func TestSeriesListGetDetail(t *testing.T) {
+	seriesList, err := GetSeries("The Simpsons")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, series := range seriesList.Series {
+		if series.Seasons != nil {
+			t.Error("series.Seasons should be nil.")
+		}
+	}
+
+	seriesList.GetDetail()
+
+	for _, series := range seriesList.Series {
+		if series.Seasons == nil {
+			t.Error("series.Seasons should not be nil.")
+		}
+	}
+}
