@@ -2,15 +2,15 @@
 package tvdb
 
 import (
-	"fmt"
-	"errors"
-	"regexp"
-	"net/url"
-	"strings"
-	"strconv"
-	"net/http"
-	"io/ioutil"
 	"encoding/xml"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -57,65 +57,65 @@ func (pipeList *PipeList) UnmarshalXML(decoder *xml.Decoder, start xml.StartElem
 
 // Episode represents a TV show episode on TheTVDB.
 type Episode struct {
-	ID uint64 `xml:"id"`
-	CombinedEpisodeNumber string `xml:"Combined_episodenumber"`
-	CombinedSeason uint64 `xml:"Combined_season"`
-	DvdChapter string `xml:"DVD_chapter"`
-	DvdDiscID string `xml:"DVD_discid"`
-	DvdEpisodeNumber string `xml:"DVD_episodenumber"`
-	DvdSeason string `xml:"DVD_season"`
-	Director PipeList `xml:"Director"`
-	EpImgFlag string `xml:"EpImgFlag"`
-	EpisodeName string `xml:"EpisodeName"`
-	EpisodeNumber uint64 `xml:"EpisodeNumber"`
-	FirstAired string `xml:"FirstAired"`
-	GuestStars string `xml:"GuestStars"`
-	ImdbID string `xml:"IMDB_ID"`
-	Language string `xml:"Language"`
-	Overview string `xml:"Overview"`
-	ProductionCode string `xml:"ProductionCode"`
-	Rating string `xml:"Rating"`
-	RatingCount string `xml:"RatingCount"`
-	SeasonNumber uint64 `xml:"SeasonNumber"`
-	Writer PipeList `xml:"Writer"`
-	AbsoluteNumber string `xml:"absolute_number"`
-	Filename string `xml:"filename"`
-	LastUpdated string `xml:"lastupdated"`
-	SeasonID uint64 `xml:"seasonid"`
-	SeriesID uint64 `xml:"seriesid"`
-	ThumbAdded string `xml:"thumb_added"`
-	ThumbHeight string `xml:"thumb_height"`
-	ThumbWidth string `xml:"thumb_width"`
+	ID                    uint64   `xml:"id"`
+	CombinedEpisodeNumber string   `xml:"Combined_episodenumber"`
+	CombinedSeason        uint64   `xml:"Combined_season"`
+	DvdChapter            string   `xml:"DVD_chapter"`
+	DvdDiscID             string   `xml:"DVD_discid"`
+	DvdEpisodeNumber      string   `xml:"DVD_episodenumber"`
+	DvdSeason             string   `xml:"DVD_season"`
+	Director              PipeList `xml:"Director"`
+	EpImgFlag             string   `xml:"EpImgFlag"`
+	EpisodeName           string   `xml:"EpisodeName"`
+	EpisodeNumber         uint64   `xml:"EpisodeNumber"`
+	FirstAired            string   `xml:"FirstAired"`
+	GuestStars            string   `xml:"GuestStars"`
+	ImdbID                string   `xml:"IMDB_ID"`
+	Language              string   `xml:"Language"`
+	Overview              string   `xml:"Overview"`
+	ProductionCode        string   `xml:"ProductionCode"`
+	Rating                string   `xml:"Rating"`
+	RatingCount           string   `xml:"RatingCount"`
+	SeasonNumber          uint64   `xml:"SeasonNumber"`
+	Writer                PipeList `xml:"Writer"`
+	AbsoluteNumber        string   `xml:"absolute_number"`
+	Filename              string   `xml:"filename"`
+	LastUpdated           string   `xml:"lastupdated"`
+	SeasonID              uint64   `xml:"seasonid"`
+	SeriesID              uint64   `xml:"seriesid"`
+	ThumbAdded            string   `xml:"thumb_added"`
+	ThumbHeight           string   `xml:"thumb_height"`
+	ThumbWidth            string   `xml:"thumb_width"`
 }
 
 // Series represents TV show on TheTVDB.
 type Series struct {
-	ID uint64 `xml:"id"`
-	Actors PipeList `xml:"Actors"`
-	AirsDayOfWeek string `xml:"Airs_DayOfWeek"`
-	AirsTime string `xml:"Airs_Time"`
-	ContentRating string `xml:"ContentRating"`
-	FirstAired string `xml:"FirstAired"`
-	Genre PipeList `xml:"Genre"`
-	ImdbID string `xml:"IMDB_ID"`
-	Language string `xml:"Language"`
-	Network string `xml:"Network"`
-	NetworkID string `xml:"NetworkID"`
-	Overview string `xml:"Overview"`
-	Rating string `xml:"Rating"`
-	RatingCount string `xml:"RatingCount"`
-	Runtime string `xml:"Runtime"`
-	SeriesID string `xml:"SeriesID"`
-	SeriesName string `xml:"SeriesName"`
-	Status string `xml:"Status"`
-	Added string `xml:"added"`
-	AddedBy string `xml:"addedBy"`
-	Banner string `xml:"banner"`
-	Fanart string `xml:"fanart"`
-	LastUpdated string `xml:"lastupdated"`
-	Poster string `xml:"poster"`
-	Zap2ItID string `xml:"zap2it_id"`
-	Seasons map[uint64][]*Episode
+	ID            uint64   `xml:"id"`
+	Actors        PipeList `xml:"Actors"`
+	AirsDayOfWeek string   `xml:"Airs_DayOfWeek"`
+	AirsTime      string   `xml:"Airs_Time"`
+	ContentRating string   `xml:"ContentRating"`
+	FirstAired    string   `xml:"FirstAired"`
+	Genre         PipeList `xml:"Genre"`
+	ImdbID        string   `xml:"IMDB_ID"`
+	Language      string   `xml:"Language"`
+	Network       string   `xml:"Network"`
+	NetworkID     string   `xml:"NetworkID"`
+	Overview      string   `xml:"Overview"`
+	Rating        string   `xml:"Rating"`
+	RatingCount   string   `xml:"RatingCount"`
+	Runtime       string   `xml:"Runtime"`
+	SeriesID      string   `xml:"SeriesID"`
+	SeriesName    string   `xml:"SeriesName"`
+	Status        string   `xml:"Status"`
+	Added         string   `xml:"added"`
+	AddedBy       string   `xml:"addedBy"`
+	Banner        string   `xml:"banner"`
+	Fanart        string   `xml:"fanart"`
+	LastUpdated   string   `xml:"lastupdated"`
+	Poster        string   `xml:"poster"`
+	Zap2ItID      string   `xml:"zap2it_id"`
+	Seasons       map[uint64][]*Episode
 }
 
 // SeriesList represents a list of TV shows, often used for returning search results.
