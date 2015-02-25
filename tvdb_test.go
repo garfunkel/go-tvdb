@@ -103,5 +103,11 @@ func TestSeriesListGetDetail(t *testing.T) {
 		if series.Seasons == nil {
 			t.Error("series.Seasons should not be nil.")
 		}
+
+		// Need to check that a value not present in GetSeries result is now
+		// available
+		if series.Poster == "" {
+			t.Error("series.poster should not be empty.")
+		}
 	}
 }
