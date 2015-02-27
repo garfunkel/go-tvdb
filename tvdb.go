@@ -153,9 +153,14 @@ func (series *Series) GetDetail() (err error) {
 		return
 	}
 
-	if err = xml.Unmarshal(data, series); err != nil {
+	// Unmarshal data into SeriesList object
+	seriesList := SeriesList{}
+	if err = xml.Unmarshal(data, &seriesList); err != nil {
 		return
 	}
+
+	// Copy the first result into the series object
+	*series = *seriesList.Series[0]
 
 	episodeList := EpisodeList{}
 
