@@ -11,7 +11,7 @@ import (
 	"time"
 	"io/ioutil"
 	"net/http"
-	"net/url"
+	//"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,6 +27,12 @@ const (
 
 	// Login API URL.
 	APILoginURL = APIURL + "/login"
+
+	// Search series params API URL.
+	APISearchSeriesParamsURL = APIURL + "/search/series/params"
+
+	// Search series API URL.
+	APISearchSeriesURL = APIURL + "/search/series"
 
 	// GetSeriesURL is used to get basic series information by name.
 	GetSeriesURL = "http://thetvdb.com/api/GetSeries.php?seriesname=%v"
@@ -90,6 +96,7 @@ type jwt struct {
 		ID string `json:"id"`
 	}
 	Signature string
+	JWT string
 }
 
 type TheTVDB struct {
@@ -100,6 +107,88 @@ type TheTVDB struct {
 type apiLoginResponse struct {
 	JWT	string `json:"token"`
 }
+
+type apiSearchSeriesParamsResponse struct {
+	Data struct {
+		Params []string `json:"params"`
+	} `json:"data"`
+}
+
+// Series represents TV show on TheTVDB.
+type Series struct {
+	Aliases []string `json:"aliases"`
+	Banner        string   `json:"banner"`
+	FirstAired    string   `json:"firstAired"`
+	ID            uint64   `json:"id"`
+	Network       string   `json:"network"`
+	Overview      string   `json:"overview"`
+	SeriesName    string   `json:"seriesName"`
+	Status        string   `json:"status"`
+
+
+	Actors        PipeList `xml:"Actors"`
+	AirsDayOfWeek string   `xml:"Airs_DayOfWeek"`
+	AirsTime      string   `xml:"Airs_Time"`
+	ContentRating string   `xml:"ContentRating"`
+	Genre         PipeList `xml:"Genre"`
+	ImdbID        string   `xml:"IMDB_ID"`
+	Language      string   `xml:"Language"`
+	NetworkID     string   `xml:"NetworkID"`
+	Rating        string   `xml:"Rating"`
+	RatingCount   string   `xml:"RatingCount"`
+	Runtime       string   `xml:"Runtime"`
+	SeriesID      string   `xml:"SeriesID"`
+	Added         string   `xml:"added"`
+	AddedBy       string   `xml:"addedBy"`
+	Fanart        string   `xml:"fanart"`
+	LastUpdated   string   `xml:"lastupdated"`
+	Poster        string   `xml:"poster"`
+	Zap2ItID      string   `xml:"zap2it_id"`
+	Seasons       map[uint64][]*Episode
+}
+
+// SeriesList represents a list of TV shows, often used for returning search results.
+type SeriesList []Series
+
+type apiSearchSeriesResponse struct {
+	Data SeriesList `json:"data"`
+}
+
+/*{
+  "data": {
+    "id": 0,
+    "airedSeason": 0,
+    "airedEpisodeNumber": 0,
+    "episodeName": "string",
+    "firstAired": "string",
+    "guestStars": "string",
+    "director": "string",
+    "writers": [
+      "string"
+    ],
+    "overview": "string",
+    "productionCode": "string",
+    "showUrl": "string",
+    "lastUpdated": 0,
+    "dvdDiscid": "string",
+    "dvdSeason": 0,
+    "dvdEpisodeNumber": 0,
+    "dvdChapter": 0,
+    "absoluteNumber": 0,
+    "filename": "string",
+    "seriesId": "string",
+    "lastUpdatedBy": "string",
+    "airsAfterSeason": 0,
+    "airsBeforeSeason": 0,
+    "airsBeforeEpisode": 0,
+    "thumbAuthor": "string",
+    "thumbAdded": "string",
+    "thumbWidth": "string",
+    "thumbHeight": "string",
+    "imdbId": "string",
+    "siteRating": 0
+  }
+}*/
 
 func DecodeJWT(jwtStr string) (j jwt, err error) {
 	fields := strings.Split(jwtStr, ".")
@@ -129,6 +218,7 @@ func DecodeJWT(jwtStr string) (j jwt, err error) {
 	}
 
 	j = jwt{
+		JWT: jwtStr,
 		Signature: string(signature),
 	}
 
@@ -184,9 +274,10 @@ func (tvdb *TheTVDB) Login() (err error) {
 
 	tvdb.jwt, err = DecodeJWT(apiResponse.JWT)
 
+	fmt.Println(apiResponse)
+
 	return
 }
-
 
 // Episode represents a TV show episode on TheTVDB.
 type Episode struct {
@@ -221,47 +312,12 @@ type Episode struct {
 	ThumbWidth            string   `xml:"thumb_width"`
 }
 
-// Series represents TV show on TheTVDB.
-type Series struct {
-	ID            uint64   `xml:"id"`
-	Actors        PipeList `xml:"Actors"`
-	AirsDayOfWeek string   `xml:"Airs_DayOfWeek"`
-	AirsTime      string   `xml:"Airs_Time"`
-	ContentRating string   `xml:"ContentRating"`
-	FirstAired    string   `xml:"FirstAired"`
-	Genre         PipeList `xml:"Genre"`
-	ImdbID        string   `xml:"IMDB_ID"`
-	Language      string   `xml:"Language"`
-	Network       string   `xml:"Network"`
-	NetworkID     string   `xml:"NetworkID"`
-	Overview      string   `xml:"Overview"`
-	Rating        string   `xml:"Rating"`
-	RatingCount   string   `xml:"RatingCount"`
-	Runtime       string   `xml:"Runtime"`
-	SeriesID      string   `xml:"SeriesID"`
-	SeriesName    string   `xml:"SeriesName"`
-	Status        string   `xml:"Status"`
-	Added         string   `xml:"added"`
-	AddedBy       string   `xml:"addedBy"`
-	Banner        string   `xml:"banner"`
-	Fanart        string   `xml:"fanart"`
-	LastUpdated   string   `xml:"lastupdated"`
-	Poster        string   `xml:"poster"`
-	Zap2ItID      string   `xml:"zap2it_id"`
-	Seasons       map[uint64][]*Episode
-}
-
-// SeriesList represents a list of TV shows, often used for returning search results.
-type SeriesList struct {
-	Series []*Series `xml:"Series"`
-}
-
 // EpisodeList represents a list of TV show episodes.
 type EpisodeList struct {
 	Episodes []*Episode `xml:"Episode"`
 }
 
-// GetDetail gets more detail for all TV shows in a list.
+/*// GetDetail gets more detail for all TV shows in a list.
 func (seriesList *SeriesList) GetDetail() (err error) {
 	for seriesIndex := range seriesList.Series {
 		if err = seriesList.Series[seriesIndex].GetDetail(); err != nil {
@@ -310,9 +366,98 @@ func (series *Series) GetDetail() (err error) {
 	}
 
 	return
+}*/
+
+func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", APISearchSeriesParamsURL, nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiSearchSeriesParamsResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	params = apiResponse.Data.Params
+
+	return
 }
 
-// GetSeries gets a list of TV series by name, by performing a simple search.
+func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList SeriesList, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", APISearchSeriesURL, nil)
+
+	if err != nil {
+		return
+	}
+
+	query := request.URL.Query()
+
+	for key, value := range params {
+		query.Add(key, value)
+	}
+	
+	request.URL.RawQuery = query.Encode()
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiSearchSeriesResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	seriesList = apiResponse.Data
+
+	return
+}
+
+/*// GetSeries gets a list of TV series by name, by performing a simple search.
 func (tvdb *TheTVDB) GetSeries(name string) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(GetSeriesURL, url.QueryEscape(name)))
 
@@ -446,4 +591,4 @@ func SearchSeries(name string, maxResults int) (seriesList SeriesList, err error
 	}
 
 	return
-}
+}*/
