@@ -2,7 +2,6 @@
 package tvdb
 
 import (
-	"encoding/xml"
 	"encoding/json"
 	"encoding/base64"
 	"errors"
@@ -11,7 +10,6 @@ import (
 	"time"
 	"io/ioutil"
 	"net/http"
-	//"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,6 +31,15 @@ const (
 
 	// Search series API URL.
 	APISearchSeriesURL = APIURL + "/search/series"
+
+	// Get series by ID API URL.
+	APISeriesURL = APIURL + "/series/%v"
+
+	// Get series actors API URL.
+	APISeriesActorsURL = APISeriesURL + "/actors"
+
+	// Get series images API URL.
+	APISeriesImagesURL = APISeriesURL + "/images"
 
 	// GetSeriesURL is used to get basic series information by name.
 	GetSeriesURL = "http://thetvdb.com/api/GetSeries.php?seriesname=%v"
@@ -60,14 +67,8 @@ var SearchSeriesRegex = regexp.MustCompile(SearchSeriesRegexPattern)
 type PipeList []string
 
 // UnmarshalXML unmarshals an XML element with string value into a pip-separated list of strings.
-func (pipeList *PipeList) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) (err error) {
-	content := ""
-
-	if err = decoder.DecodeElement(&content, &start); err != nil {
-		return err
-	}
-
-	*pipeList = strings.Split(strings.Trim(content, "|"), "|")
+func (pipeList *PipeList) UnmarshalJSON(data []byte) (err error) {
+	*pipeList = strings.Split(strings.Trim(string(data), "|"), "|")
 
 	return
 }
@@ -116,79 +117,157 @@ type apiSearchSeriesParamsResponse struct {
 
 // Series represents TV show on TheTVDB.
 type Series struct {
-	Aliases []string `json:"aliases"`
-	Banner        string   `json:"banner"`
-	FirstAired    string   `json:"firstAired"`
 	ID            uint64   `json:"id"`
-	Network       string   `json:"network"`
-	Overview      string   `json:"overview"`
 	SeriesName    string   `json:"seriesName"`
+	aliases []string `json:"aliases"`
+	Banner        string   `json:"banner"`
+	SeriesID      string   `json:"seriesID"`
 	Status        string   `json:"status"`
+	FirstAired    string   `json:"firstAired"`
+	Network       string   `json:"network"`
+	NetworkID     string   `json:"networkId"`
+	Runtime       string   `json:"runtime"`
+	Genres []string `json:"genre"`
+	Overview      string   `json:"overview"`
+	LastUpdated   jwtTime   `json:"lastUpdated"`
+	AirsDayOfWeek string   `json:"airsDayOfWeek"`
+	AirsTime      string   `json:"airsTime"`
+	Rating        string   `json:"rating"`
+	IMDbID        string   `json:"imdbId"`
+	Zap2ItID      string   `json:"zap2itId"`
+	Added         string   `json:"added"`
+	AddedBy       string   `json:"addedBy"`
+	siteRating int `json:"siteRating"`
 
-
-	Actors        PipeList `xml:"Actors"`
-	AirsDayOfWeek string   `xml:"Airs_DayOfWeek"`
-	AirsTime      string   `xml:"Airs_Time"`
+	/*Actors        PipeList `xml:"Actors"`
 	ContentRating string   `xml:"ContentRating"`
-	Genre         PipeList `xml:"Genre"`
-	ImdbID        string   `xml:"IMDB_ID"`
 	Language      string   `xml:"Language"`
-	NetworkID     string   `xml:"NetworkID"`
-	Rating        string   `xml:"Rating"`
 	RatingCount   string   `xml:"RatingCount"`
-	Runtime       string   `xml:"Runtime"`
-	SeriesID      string   `xml:"SeriesID"`
-	Added         string   `xml:"added"`
-	AddedBy       string   `xml:"addedBy"`
 	Fanart        string   `xml:"fanart"`
-	LastUpdated   string   `xml:"lastupdated"`
 	Poster        string   `xml:"poster"`
-	Zap2ItID      string   `xml:"zap2it_id"`
-	Seasons       map[uint64][]*Episode
+	Seasons       map[uint64][]*Episode*/
 }
 
 // SeriesList represents a list of TV shows, often used for returning search results.
 type SeriesList []Series
 
+func (series *Series) Actors() (actors []Actor, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesActorsURL, series.ID), nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiSeriesActorsResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	actors = apiResponse.Data
+
+	return
+}
+
+func (series *Series) Images() (images []Image, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesImagesURL, series.ID), nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiSeriesImagesResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	images = []Image{apiResponse.Data}
+
+	return
+}
+
+type Actor struct {
+	ID uint64 `json:"id"`
+	SeriesID uint64 `json:"seriesId"`
+	Name string `json:"name"`
+	Role PipeList `json:"role"`
+	SortOrder uint64 `json:"sortOrder"`
+	Image string `json:"image"`
+	ImageAuthor uint64 `json:"imageAuthor"`
+	ImageAdded string `json:"imageAdded"`
+	LastUpdated string `json:"lastUpdated"`
+}
+
+type Image struct {
+	FanArt uint64 `json:"fanart"`
+	Poster uint64 `json:"poster"`
+	Season uint64 `json:"season"`
+	SeasonWide uint64 `json:"seasonwide"`
+	Series uint64 `json:"series"`
+}
+
 type apiSearchSeriesResponse struct {
 	Data SeriesList `json:"data"`
 }
 
-/*{
-  "data": {
-    "id": 0,
-    "airedSeason": 0,
-    "airedEpisodeNumber": 0,
-    "episodeName": "string",
-    "firstAired": "string",
-    "guestStars": "string",
-    "director": "string",
-    "writers": [
-      "string"
-    ],
-    "overview": "string",
-    "productionCode": "string",
-    "showUrl": "string",
-    "lastUpdated": 0,
-    "dvdDiscid": "string",
-    "dvdSeason": 0,
-    "dvdEpisodeNumber": 0,
-    "dvdChapter": 0,
-    "absoluteNumber": 0,
-    "filename": "string",
-    "seriesId": "string",
-    "lastUpdatedBy": "string",
-    "airsAfterSeason": 0,
-    "airsBeforeSeason": 0,
-    "airsBeforeEpisode": 0,
-    "thumbAuthor": "string",
-    "thumbAdded": "string",
-    "thumbWidth": "string",
-    "thumbHeight": "string",
-    "imdbId": "string",
-    "siteRating": 0
-  }
-}*/
+type apiSeriesResponse struct {
+	Data Series `json:"data"`
+}
+
+type apiSeriesActorsResponse struct {
+	Data []Actor `json:"data"`
+}
+
+type apiSeriesImagesResponse struct {
+	Data Image `json:"data"`
+}
 
 func DecodeJWT(jwtStr string) (j jwt, err error) {
 	fields := strings.Split(jwtStr, ".")
@@ -273,8 +352,6 @@ func (tvdb *TheTVDB) Login() (err error) {
 	}
 
 	tvdb.jwt, err = DecodeJWT(apiResponse.JWT)
-
-	fmt.Println(apiResponse)
 
 	return
 }
@@ -457,6 +534,48 @@ func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList SeriesLi
 	return
 }
 
+// GetSeriesByID gets a TV series by ID.
+func (tvdb *TheTVDB) GetSeriesByID(id uint64) (series Series, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesURL, id), nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiSeriesResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	series = apiResponse.Data
+
+	return
+}
+
 /*// GetSeries gets a list of TV series by name, by performing a simple search.
 func (tvdb *TheTVDB) GetSeries(name string) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(GetSeriesURL, url.QueryEscape(name)))
@@ -472,37 +591,6 @@ func (tvdb *TheTVDB) GetSeries(name string) (seriesList SeriesList, err error) {
 	}
 
 	err = xml.Unmarshal(data, &seriesList)
-
-	return
-}
-
-// GetSeriesByID gets a TV series by ID.
-func GetSeriesByID(id uint64) (series *Series, err error) {
-	response, err := http.Get(fmt.Sprintf(GetSeriesByIDURL, APIKey, id))
-
-	if err != nil {
-		return
-	}
-
-	data, err := ioutil.ReadAll(response.Body)
-
-	if err != nil {
-		return
-	}
-
-	seriesList := SeriesList{}
-
-	if err = xml.Unmarshal(data, &seriesList); err != nil {
-		return
-	}
-
-	if len(seriesList.Series) != 1 {
-		err = errors.New("incorrect number of series")
-
-		return
-	}
-
-	series = seriesList.Series[0]
 
 	return
 }

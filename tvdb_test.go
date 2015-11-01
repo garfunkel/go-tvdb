@@ -40,10 +40,10 @@ func TestSearchSeries(t *testing.T) {
 
 	t.Error("No 'The Simpsons' title could be found.")
 }
-/*
+
 // TestGetSeriesByID tests the GetSeriesByID function.
 func TestGetSeriesByID(t *testing.T) {
-	series, err := GetSeriesByID(71663)
+	series, err := tvdb.GetSeriesByID(71663)
 
 	if err != nil {
 		t.Error(err)
@@ -54,6 +54,41 @@ func TestGetSeriesByID(t *testing.T) {
 	}
 }
 
+func TestGetSeriesActors(t *testing.T) {
+	series, err := tvdb.GetSeriesByID(71663)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	actors, err := series.Actors()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, actor := range actors {
+		if actor.Name == "Nancy Cartwright" {
+			return
+		}
+	}
+}
+
+func TestGetSeriesImages(t *testing.T) {
+	series, err := tvdb.GetSeriesByID(71663)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = series.Images()
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+/*
 // TestGetSeriesByIMDBID tests the GetSeriesByIMDBID function.
 func TestGetSeriesByIMDBID(t *testing.T) {
 	series, err := GetSeriesByIMDBID("tt0096697")
