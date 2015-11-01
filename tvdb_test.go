@@ -4,9 +4,19 @@ import (
 	"testing"
 )
 
+var (
+	tvdb = New(APIKey)
+)
+
+func TestLogin(t *testing.T) {
+	if err := tvdb.Login(); err != nil {
+		t.Error(err)
+	}
+}
+
 // TestGetSeries tests the GetSeries function.
 func TestGetSeries(t *testing.T) {
-	seriesList, err := GetSeries("The Simpsons")
+	seriesList, err := tvdb.GetSeries("The Simpsons")
 
 	if err != nil {
 		t.Error(err)
@@ -85,7 +95,7 @@ func TestSeriesGetDetail(t *testing.T) {
 
 // TestSeriesListGetDetail tests the SeriesList type's GetDetail function.
 func TestSeriesListGetDetail(t *testing.T) {
-	seriesList, err := GetSeries("The Simpsons")
+	seriesList, err := tvdb.GetSeries("The Simpsons")
 
 	if err != nil {
 		t.Error(err)

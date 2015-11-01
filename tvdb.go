@@ -3,8 +3,12 @@ package tvdb
 
 import (
 	"encoding/xml"
+	"encoding/json"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"bytes"
+	"time"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,7 +19,14 @@ import (
 
 const (
 	// APIKey is the TheTVDB API key.
-	APIKey = "DECE3B6B5464C552"
+	//APIKey = "DECE3B6B5464C552"
+	APIKey = "C53F79E0F7BEBD54"
+
+	// API base URL.
+	APIURL = "https://api-beta.thetvdb.com"
+
+	// Login API URL.
+	APILoginURL = APIURL + "/login"
 
 	// GetSeriesURL is used to get basic series information by name.
 	GetSeriesURL = "http://thetvdb.com/api/GetSeries.php?seriesname=%v"
@@ -54,6 +65,128 @@ func (pipeList *PipeList) UnmarshalXML(decoder *xml.Decoder, start xml.StartElem
 
 	return
 }
+
+type jwtTime time.Time
+
+func (t *jwtTime) UnmarshalJSON(data []byte) (err error) {
+	unixTime, err := strconv.ParseInt(string(data), 10, 64)
+
+	if err != nil {
+		return
+	}
+
+	*t = jwtTime(time.Unix(unixTime, 0))
+
+	return
+}
+
+type jwt struct {
+	Header struct {
+		Algorithm string `json:"alg"`
+	}
+	Claims struct {
+		IssuedAt jwtTime `json:"orig_iat"`
+		Expires jwtTime `json:"exp"`
+		ID string `json:"id"`
+	}
+	Signature string
+}
+
+type TheTVDB struct {
+	apiKey string
+	jwt jwt
+}
+
+type apiLoginResponse struct {
+	JWT	string `json:"token"`
+}
+
+func DecodeJWT(jwtStr string) (j jwt, err error) {
+	fields := strings.Split(jwtStr, ".")
+
+	if len(fields) != 3 {
+		err = errors.New("Invalid JWT string")
+
+		return
+	}
+
+	header, err := base64.StdEncoding.DecodeString(fields[0])
+
+	if err != nil {
+		return
+	}
+
+	claims, err := base64.StdEncoding.DecodeString(fields[1])
+
+	if err != nil {
+		return
+	}
+
+	signature, err := base64.RawURLEncoding.DecodeString(fields[2])
+
+	if err != nil {
+		return
+	}
+
+	j = jwt{
+		Signature: string(signature),
+	}
+
+	err = json.Unmarshal(header, &j.Header)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(claims, &j.Claims)
+
+	return
+}
+
+func New(apiKey string) (tvdb *TheTVDB) {
+	tvdb = &TheTVDB{
+		apiKey: apiKey,
+	}
+
+	return
+}
+
+func (tvdb *TheTVDB) Login() (err error) {
+	data := fmt.Sprintf(`{"apikey": "%s"}`, tvdb.apiKey)
+
+	request, err := http.NewRequest("POST", APILoginURL, bytes.NewBufferString(data))
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiLoginResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	tvdb.jwt, err = DecodeJWT(apiResponse.JWT)
+
+	return
+}
+
 
 // Episode represents a TV show episode on TheTVDB.
 type Episode struct {
@@ -180,7 +313,7 @@ func (series *Series) GetDetail() (err error) {
 }
 
 // GetSeries gets a list of TV series by name, by performing a simple search.
-func GetSeries(name string) (seriesList SeriesList, err error) {
+func (tvdb *TheTVDB) GetSeries(name string) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(GetSeriesURL, url.QueryEscape(name)))
 
 	if err != nil {
