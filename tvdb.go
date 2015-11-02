@@ -3,8 +3,6 @@ package tvdb
 
 import (
 	"encoding/json"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"bytes"
 	"time"
@@ -82,31 +80,18 @@ func (pipeList *PipeList) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
-type jwtTime time.Time
+type unixTime time.Time
 
-func (t *jwtTime) UnmarshalJSON(data []byte) (err error) {
-	unixTime, err := strconv.ParseInt(string(data), 10, 64)
+func (t *unixTime) UnmarshalJSON(data []byte) (err error) {
+	unixSeconds, err := strconv.ParseInt(string(data), 10, 64)
 
 	if err != nil {
 		return
 	}
 
-	*t = jwtTime(time.Unix(unixTime, 0))
+	*t = unixTime(time.Unix(unixSeconds, 0))
 
 	return
-}
-
-type jwt struct {
-	Header struct {
-		Algorithm string `json:"alg"`
-	}
-	Claims struct {
-		IssuedAt jwtTime `json:"orig_iat"`
-		Expires jwtTime `json:"exp"`
-		ID string `json:"id"`
-	}
-	Signature string
-	JWT string
 }
 
 type TheTVDB struct {
@@ -122,124 +107,6 @@ type apiSearchSeriesParamsResponse struct {
 	Data struct {
 		Params []string `json:"params"`
 	} `json:"data"`
-}
-
-// Series represents TV show on TheTVDB.
-type Series struct {
-	ID            uint64   `json:"id"`
-	SeriesName    string   `json:"seriesName"`
-	aliases []string `json:"aliases"`
-	Banner        string   `json:"banner"`
-	SeriesID      string   `json:"seriesID"`
-	Status        string   `json:"status"`
-	FirstAired    string   `json:"firstAired"`
-	Network       string   `json:"network"`
-	NetworkID     string   `json:"networkId"`
-	Runtime       string   `json:"runtime"`
-	Genres []string `json:"genre"`
-	Overview      string   `json:"overview"`
-	LastUpdated   jwtTime   `json:"lastUpdated"`
-	AirsDayOfWeek string   `json:"airsDayOfWeek"`
-	AirsTime      string   `json:"airsTime"`
-	Rating        string   `json:"rating"`
-	IMDbID        string   `json:"imdbId"`
-	Zap2ItID      string   `json:"zap2itId"`
-	Added         string   `json:"added"`
-	AddedBy       string   `json:"addedBy"`
-	siteRating int `json:"siteRating"`
-
-	/*Actors        PipeList `xml:"Actors"`
-	ContentRating string   `xml:"ContentRating"`
-	Language      string   `xml:"Language"`
-	RatingCount   string   `xml:"RatingCount"`
-	Fanart        string   `xml:"fanart"`
-	Poster        string   `xml:"poster"`
-	Seasons       map[uint64][]*Episode*/
-}
-
-// SeriesList represents a list of TV shows, often used for returning search results.
-type SeriesList []Series
-
-func (series *Series) Actors() (actors []Actor, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
-	// Refresh JWT if it is about to expire.
-
-	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesActorsURL, series.ID), nil)
-
-	if err != nil {
-		return
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
-
-	response, err := http.DefaultClient.Do(request)
-
-	if err != nil {
-		return
-	}
-
-	body, err := ioutil.ReadAll(response.Body)
-
-	if err != nil {
-		return
-	}
-
-	apiResponse := apiSeriesActorsResponse{}
-
-	err = json.Unmarshal(body, &apiResponse)
-
-	if err != nil {
-		return
-	}
-
-	actors = apiResponse.Data
-
-	return
-}
-
-func (series *Series) Images() (images []Image, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
-	// Refresh JWT if it is about to expire.
-
-	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesImagesURL, series.ID), nil)
-
-	if err != nil {
-		return
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
-
-	response, err := http.DefaultClient.Do(request)
-
-	if err != nil {
-		return
-	}
-
-	body, err := ioutil.ReadAll(response.Body)
-
-	if err != nil {
-		return
-	}
-
-	apiResponse := apiSeriesImagesResponse{}
-
-	err = json.Unmarshal(body, &apiResponse)
-
-	if err != nil {
-		return
-	}
-
-	images = []Image{apiResponse.Data}
-
-	return
 }
 
 type Actor struct {
@@ -270,7 +137,7 @@ type Language struct {
 }
 
 type apiSearchSeriesResponse struct {
-	Data SeriesList `json:"data"`
+	Data []Series `json:"data"`
 }
 
 type apiSeriesResponse struct {
@@ -291,49 +158,6 @@ type apiLanguagesResponse struct {
 
 type apiLanguageByIDResponse struct {
 	Data Language `json:"data"`
-}
-
-func DecodeJWT(jwtStr string) (j jwt, err error) {
-	fields := strings.Split(jwtStr, ".")
-
-	if len(fields) != 3 {
-		err = errors.New("Invalid JWT string")
-
-		return
-	}
-
-	header, err := base64.StdEncoding.DecodeString(fields[0])
-
-	if err != nil {
-		return
-	}
-
-	claims, err := base64.StdEncoding.DecodeString(fields[1])
-
-	if err != nil {
-		return
-	}
-
-	signature, err := base64.RawURLEncoding.DecodeString(fields[2])
-
-	if err != nil {
-		return
-	}
-
-	j = jwt{
-		JWT: jwtStr,
-		Signature: string(signature),
-	}
-
-	err = json.Unmarshal(header, &j.Header)
-
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(claims, &j.Claims)
-
-	return
 }
 
 func New(apiKey string) (tvdb *TheTVDB) {
@@ -633,7 +457,7 @@ func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
 	return
 }
 
-func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList SeriesList, err error) {
+func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList []Series, err error) {
 	// Check JWT expiry.
 
 	// Login if JWT expired.
