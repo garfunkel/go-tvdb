@@ -14,6 +14,12 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestRefreshToken(t *testing.T) {
+	if err := tvdb.RefreshToken(); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestLanguages(t *testing.T) {
 	languages, err := tvdb.Languages()
 

@@ -26,6 +26,9 @@ const (
 	// Login API URL.
 	APILoginURL = APIURL + "/login"
 
+	// Refresh token API URL.
+	APIRefreshTokenURL = APIURL + "/refresh_token"
+
 	// Languages API URL.
 	APILanguagesURL = APIURL + "/languages"
 
@@ -351,6 +354,47 @@ func (tvdb *TheTVDB) Login() (err error) {
 	}
 
 	request.Header.Add("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiLoginResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	tvdb.jwt, err = DecodeJWT(apiResponse.JWT)
+
+	return
+}
+
+func (tvdb *TheTVDB) RefreshToken() (err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", APIRefreshTokenURL, nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
 
 	response, err := http.DefaultClient.Do(request)
 
