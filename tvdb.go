@@ -26,6 +26,12 @@ const (
 	// Login API URL.
 	APILoginURL = APIURL + "/login"
 
+	// Languages API URL.
+	APILanguagesURL = APIURL + "/languages"
+
+	// Language by ID API URL.
+	APILanguageByIDURL = APILanguagesURL + "/%v"
+
 	// Search series params API URL.
 	APISearchSeriesParamsURL = APIURL + "/search/series/params"
 
@@ -253,6 +259,13 @@ type Image struct {
 	Series uint64 `json:"series"`
 }
 
+type Language struct {
+	ID uint64 `json:"id"`
+	Abbreviation string `json:"abbreviation"`
+	Name string `json:"name"`
+	EnglishName string `json:"englishName"`
+}
+
 type apiSearchSeriesResponse struct {
 	Data SeriesList `json:"data"`
 }
@@ -267,6 +280,14 @@ type apiSeriesActorsResponse struct {
 
 type apiSeriesImagesResponse struct {
 	Data Image `json:"data"`
+}
+
+type apiLanguagesResponse struct {
+	Data []Language `json:"data"`
+}
+
+type apiLanguageByIDResponse struct {
+	Data Language `json:"data"`
 }
 
 func DecodeJWT(jwtStr string) (j jwt, err error) {
@@ -444,6 +465,88 @@ func (series *Series) GetDetail() (err error) {
 
 	return
 }*/
+
+func (tvdb *TheTVDB) Languages() (languages []Language, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", APILanguagesURL, nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiLanguagesResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	languages = apiResponse.Data
+
+	return
+}
+
+func (tvdb *TheTVDB) LanguageByID(id uint64) (language Language, err error) {
+	// Check JWT expiry.
+
+	// Login if JWT expired.
+
+	// Refresh JWT if it is about to expire.
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(APILanguageByIDURL, id), nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiLanguageByIDResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	language = apiResponse.Data
+
+	return
+}
 
 func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
 	// Check JWT expiry.

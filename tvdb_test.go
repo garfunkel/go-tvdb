@@ -14,6 +14,34 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestLanguages(t *testing.T) {
+	languages, err := tvdb.Languages()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, language := range languages {
+		if language.Name == "English" {
+			return
+		}
+	}
+
+	t.Error("No 'English' language could be found.")
+}
+
+func TestLanguageByID(t *testing.T) {
+	language, err := tvdb.LanguageByID(7)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if language.Name != "English" {
+		t.Error("Unexpected language.")
+	}
+}
+
 func TestSearchSeriesParams(t *testing.T) {
 	_, err := tvdb.SearchSeriesParams()
 
