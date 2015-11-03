@@ -60,7 +60,7 @@ func TestSearchSeries(t *testing.T) {
 	params := map[string]string{
 		"name": "The Simpsons",
 	}
-	seriesList, err := tvdb.SearchSeries(params)
+	seriesList, err := tvdb.SearchSeries(params, "en")
 
 	if err != nil {
 		t.Error(err)
@@ -77,7 +77,7 @@ func TestSearchSeries(t *testing.T) {
 
 // TestGetSeriesByID tests the GetSeriesByID function.
 func TestGetSeriesByID(t *testing.T) {
-	series, err := tvdb.GetSeriesByID(71663)
+	series, err := tvdb.GetSeriesByID(71663, "en")
 
 	if err != nil {
 		t.Error(err)
@@ -89,7 +89,7 @@ func TestGetSeriesByID(t *testing.T) {
 }
 
 func TestGetSeriesActors(t *testing.T) {
-	series, err := tvdb.GetSeriesByID(71663)
+	series, err := tvdb.GetSeriesByID(71663, "en")
 
 	if err != nil {
 		t.Error(err)
@@ -109,7 +109,7 @@ func TestGetSeriesActors(t *testing.T) {
 }
 
 func TestGetSeriesImages(t *testing.T) {
-	series, err := tvdb.GetSeriesByID(71663)
+	series, err := tvdb.GetSeriesByID(71663, "en")
 
 	if err != nil {
 		t.Error(err)

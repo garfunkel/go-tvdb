@@ -360,7 +360,7 @@ func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
 	return
 }
 
-func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList []Series, err error) {
+func (tvdb *TheTVDB) SearchSeries(params map[string]string, language string) (seriesList []Series, err error) {
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
@@ -388,6 +388,10 @@ func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList []Series
 	request.URL.RawQuery = query.Encode()
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	if language != "" {
+		request.Header.Add("Accept-Language", language)
+	}
 
 	response, err := http.DefaultClient.Do(request)
 
@@ -419,7 +423,7 @@ func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList []Series
 }
 
 // GetSeriesByID gets a TV series by ID.
-func (tvdb *TheTVDB) GetSeriesByID(id uint64) (series Series, err error) {
+func (tvdb *TheTVDB) GetSeriesByID(id uint64, language string) (series Series, err error) {
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
@@ -440,6 +444,10 @@ func (tvdb *TheTVDB) GetSeriesByID(id uint64) (series Series, err error) {
 
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	if language != "" {
+		request.Header.Add("Accept-Language", language)
+	}
 
 	response, err := http.DefaultClient.Do(request)
 
