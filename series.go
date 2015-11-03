@@ -30,14 +30,21 @@ type Series struct {
 	Added         string   `json:"added"`
 	AddedBy       string   `json:"addedBy"`
 	siteRating int `json:"siteRating"`
+	tvdb *TheTVDB
 }
 
 func (series *Series) Images() (images []Image, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if series.tvdb.jwt.Expired() {
+		err = series.tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if series.tvdb.jwt.AboutToExpire() {
+		err = series.tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesImagesURL, series.ID), nil)
 
@@ -46,7 +53,7 @@ func (series *Series) Images() (images []Image, err error) {
 	}
 
 	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", series.tvdb.jwt.JWT))
 
 	response, err := http.DefaultClient.Do(request)
 
@@ -74,11 +81,17 @@ func (series *Series) Images() (images []Image, err error) {
 }
 
 func (series *Series) Actors() (actors []Actor, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if series.tvdb.jwt.Expired() {
+		err = series.tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if series.tvdb.jwt.AboutToExpire() {
+		err = series.tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesActorsURL, series.ID), nil)
 
@@ -87,7 +100,7 @@ func (series *Series) Actors() (actors []Actor, err error) {
 	}
 
 	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", series.tvdb.jwt.JWT))
 
 	response, err := http.DefaultClient.Do(request)
 

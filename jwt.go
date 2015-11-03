@@ -1,6 +1,7 @@
 package tvdb
 
 import (
+	"time"
 	"strings"
 	"errors"
 	"encoding/base64"
@@ -18,6 +19,16 @@ type jwt struct {
 	}
 	Signature string
 	JWT string
+}
+
+func (j *jwt) AboutToExpire() bool {
+	diff := time.Time(j.Claims.Expires).Sub(time.Now())
+
+	return diff <= 5 * time.Minute
+}
+
+func (j *jwt) Expired() bool {
+	return time.Now().After(time.Time(j.Claims.Expires))
 }
 
 func DecodeJWT(jwtStr string) (j jwt, err error) {

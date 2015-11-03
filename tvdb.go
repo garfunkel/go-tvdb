@@ -178,11 +178,12 @@ func (tvdb *TheTVDB) Login() (err error) {
 }
 
 func (tvdb *TheTVDB) RefreshToken() (err error) {
-	// Check JWT expiry.
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
 
-	// Login if JWT expired.
-
-	// Refresh JWT if it is about to expire.
+		return
+	}
 
 	request, err := http.NewRequest("GET", APIRefreshTokenURL, nil)
 
@@ -219,11 +220,17 @@ func (tvdb *TheTVDB) RefreshToken() (err error) {
 }
 
 func (tvdb *TheTVDB) Languages() (languages []Language, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if tvdb.jwt.AboutToExpire() {
+		err = tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", APILanguagesURL, nil)
 
@@ -260,11 +267,17 @@ func (tvdb *TheTVDB) Languages() (languages []Language, err error) {
 }
 
 func (tvdb *TheTVDB) LanguageByID(id uint64) (language Language, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if tvdb.jwt.AboutToExpire() {
+		err = tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", fmt.Sprintf(APILanguageByIDURL, id), nil)
 
@@ -301,11 +314,17 @@ func (tvdb *TheTVDB) LanguageByID(id uint64) (language Language, err error) {
 }
 
 func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if tvdb.jwt.AboutToExpire() {
+		err = tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", APISearchSeriesParamsURL, nil)
 
@@ -342,11 +361,17 @@ func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
 }
 
 func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList []Series, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if tvdb.jwt.AboutToExpire() {
+		err = tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", APISearchSeriesURL, nil)
 
@@ -386,16 +411,26 @@ func (tvdb *TheTVDB) SearchSeries(params map[string]string) (seriesList []Series
 
 	seriesList = apiResponse.Data
 
+	for _, series := range seriesList {
+		series.tvdb = tvdb
+	}
+
 	return
 }
 
 // GetSeriesByID gets a TV series by ID.
 func (tvdb *TheTVDB) GetSeriesByID(id uint64) (series Series, err error) {
-	// Check JWT expiry.
-
-	// Login if JWT expired.
-
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
 	// Refresh JWT if it is about to expire.
+	} else if tvdb.jwt.AboutToExpire() {
+		err = tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
 
 	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesURL, id), nil)
 
@@ -427,6 +462,7 @@ func (tvdb *TheTVDB) GetSeriesByID(id uint64) (series Series, err error) {
 	}
 
 	series = apiResponse.Data
+	series.tvdb = tvdb
 
 	return
 }
