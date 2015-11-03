@@ -1,9 +1,9 @@
 package tvdb
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"encoding/json"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ import (
 type Series struct {
 	ID            uint64   `json:"id"`
 	SeriesName    string   `json:"seriesName"`
-	aliases []string `json:"aliases"`
+	aliases       []string `json:"aliases"`
 	Banner        string   `json:"banner"`
 	SeriesID      string   `json:"seriesID"`
 	Status        string   `json:"status"`
@@ -19,9 +19,9 @@ type Series struct {
 	Network       string   `json:"network"`
 	NetworkID     string   `json:"networkId"`
 	Runtime       string   `json:"runtime"`
-	Genres []string `json:"genre"`
+	Genres        []string `json:"genre"`
 	Overview      string   `json:"overview"`
-	LastUpdated   unixTime   `json:"lastUpdated"`
+	LastUpdated   unixTime `json:"lastUpdated"`
 	AirsDayOfWeek string   `json:"airsDayOfWeek"`
 	AirsTime      string   `json:"airsTime"`
 	Rating        string   `json:"rating"`
@@ -29,15 +29,15 @@ type Series struct {
 	Zap2ItID      string   `json:"zap2itId"`
 	Added         string   `json:"added"`
 	AddedBy       string   `json:"addedBy"`
-	siteRating int `json:"siteRating"`
-	tvdb *TheTVDB
+	siteRating    int      `json:"siteRating"`
+	tvdb          *TheTVDB
 }
 
 func (series *Series) Images() (images []Image, err error) {
 	// Login again if JWT has expired.
 	if series.tvdb.jwt.Expired() {
 		err = series.tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if series.tvdb.jwt.AboutToExpire() {
 		err = series.tvdb.RefreshToken()
 	}
@@ -84,7 +84,7 @@ func (series *Series) Actors() (actors []Actor, err error) {
 	// Login again if JWT has expired.
 	if series.tvdb.jwt.Expired() {
 		err = series.tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if series.tvdb.jwt.AboutToExpire() {
 		err = series.tvdb.RefreshToken()
 	}

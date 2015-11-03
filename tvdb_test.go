@@ -106,6 +106,8 @@ func TestGetSeriesActors(t *testing.T) {
 			return
 		}
 	}
+
+	t.Error("No 'Nany Cartwright' actor could be found.")
 }
 
 func TestGetSeriesImages(t *testing.T) {
@@ -119,6 +121,18 @@ func TestGetSeriesImages(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestGetEpisode(t *testing.T) {
+	episode, err := tvdb.GetEpisodeByID(55561, "en")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if episode.EpisodeName != "Bart's Girlfriend" {
+		t.Error("ID lookup for '55561' failed.")
 	}
 }
 

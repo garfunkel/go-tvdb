@@ -1,11 +1,11 @@
 package tvdb
 
 import (
-	"time"
-	"strings"
-	"errors"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"strings"
+	"time"
 )
 
 type jwt struct {
@@ -14,17 +14,17 @@ type jwt struct {
 	}
 	Claims struct {
 		IssuedAt unixTime `json:"orig_iat"`
-		Expires unixTime `json:"exp"`
-		ID string `json:"id"`
+		Expires  unixTime `json:"exp"`
+		ID       string   `json:"id"`
 	}
 	Signature string
-	JWT string
+	JWT       string
 }
 
 func (j *jwt) AboutToExpire() bool {
 	diff := time.Time(j.Claims.Expires).Sub(time.Now())
 
-	return diff <= 5 * time.Minute
+	return diff <= 5*time.Minute
 }
 
 func (j *jwt) Expired() bool {
@@ -59,7 +59,7 @@ func DecodeJWT(jwtStr string) (j jwt, err error) {
 	}
 
 	j = jwt{
-		JWT: jwtStr,
+		JWT:       jwtStr,
 		Signature: string(signature),
 	}
 

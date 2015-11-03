@@ -2,9 +2,9 @@
 package tvdb
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"bytes"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -45,6 +45,9 @@ const (
 	// Get series images API URL.
 	APISeriesImagesURL = APISeriesURL + "/images"
 
+	// Get episode by ID API URL.
+	APIEpisodeURL = APIURL + "/episodes/%v"
+
 	// GetSeriesURL is used to get basic series information by name.
 	GetSeriesURL = "http://thetvdb.com/api/GetSeries.php?seriesname=%v"
 
@@ -69,11 +72,11 @@ var SearchSeriesRegex = regexp.MustCompile(SearchSeriesRegexPattern)
 
 type TheTVDB struct {
 	apiKey string
-	jwt jwt
+	jwt    jwt
 }
 
 type apiLoginResponse struct {
-	JWT	string `json:"token"`
+	JWT string `json:"token"`
 }
 
 type apiSearchSeriesParamsResponse struct {
@@ -83,30 +86,30 @@ type apiSearchSeriesParamsResponse struct {
 }
 
 type Actor struct {
-	ID uint64 `json:"id"`
-	SeriesID uint64 `json:"seriesId"`
-	Name string `json:"name"`
-	Role pipeList `json:"role"`
-	SortOrder uint64 `json:"sortOrder"`
-	Image string `json:"image"`
-	ImageAuthor uint64 `json:"imageAuthor"`
-	ImageAdded string `json:"imageAdded"`
-	LastUpdated string `json:"lastUpdated"`
+	ID          uint64   `json:"id"`
+	SeriesID    uint64   `json:"seriesId"`
+	Name        string   `json:"name"`
+	Role        pipeList `json:"role"`
+	SortOrder   uint64   `json:"sortOrder"`
+	Image       string   `json:"image"`
+	ImageAuthor uint64   `json:"imageAuthor"`
+	ImageAdded  string   `json:"imageAdded"`
+	LastUpdated string   `json:"lastUpdated"`
 }
 
 type Image struct {
-	FanArt uint64 `json:"fanart"`
-	Poster uint64 `json:"poster"`
-	Season uint64 `json:"season"`
+	FanArt     uint64 `json:"fanart"`
+	Poster     uint64 `json:"poster"`
+	Season     uint64 `json:"season"`
 	SeasonWide uint64 `json:"seasonwide"`
-	Series uint64 `json:"series"`
+	Series     uint64 `json:"series"`
 }
 
 type Language struct {
-	ID uint64 `json:"id"`
+	ID           uint64 `json:"id"`
 	Abbreviation string `json:"abbreviation"`
-	Name string `json:"name"`
-	EnglishName string `json:"englishName"`
+	Name         string `json:"name"`
+	EnglishName  string `json:"englishName"`
 }
 
 type apiSearchSeriesResponse struct {
@@ -123,6 +126,10 @@ type apiSeriesActorsResponse struct {
 
 type apiSeriesImagesResponse struct {
 	Data Image `json:"data"`
+}
+
+type apiEpisodeResponse struct {
+	Data Episode `json:"data"`
 }
 
 type apiLanguagesResponse struct {
@@ -223,7 +230,7 @@ func (tvdb *TheTVDB) Languages() (languages []Language, err error) {
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if tvdb.jwt.AboutToExpire() {
 		err = tvdb.RefreshToken()
 	}
@@ -270,7 +277,7 @@ func (tvdb *TheTVDB) LanguageByID(id uint64) (language Language, err error) {
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if tvdb.jwt.AboutToExpire() {
 		err = tvdb.RefreshToken()
 	}
@@ -317,7 +324,7 @@ func (tvdb *TheTVDB) SearchSeriesParams() (params []string, err error) {
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if tvdb.jwt.AboutToExpire() {
 		err = tvdb.RefreshToken()
 	}
@@ -364,7 +371,7 @@ func (tvdb *TheTVDB) SearchSeries(params map[string]string, language string) (se
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if tvdb.jwt.AboutToExpire() {
 		err = tvdb.RefreshToken()
 	}
@@ -384,7 +391,7 @@ func (tvdb *TheTVDB) SearchSeries(params map[string]string, language string) (se
 	for key, value := range params {
 		query.Add(key, value)
 	}
-	
+
 	request.URL.RawQuery = query.Encode()
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
@@ -427,7 +434,7 @@ func (tvdb *TheTVDB) GetSeriesByID(id uint64, language string) (series Series, e
 	// Login again if JWT has expired.
 	if tvdb.jwt.Expired() {
 		err = tvdb.Login()
-	// Refresh JWT if it is about to expire.
+		// Refresh JWT if it is about to expire.
 	} else if tvdb.jwt.AboutToExpire() {
 		err = tvdb.RefreshToken()
 	}
@@ -471,6 +478,58 @@ func (tvdb *TheTVDB) GetSeriesByID(id uint64, language string) (series Series, e
 
 	series = apiResponse.Data
 	series.tvdb = tvdb
+
+	return
+}
+
+func (tvdb *TheTVDB) GetEpisodeByID(id uint64, language string) (episode Episode, err error) {
+	// Login again if JWT has expired.
+	if tvdb.jwt.Expired() {
+		err = tvdb.Login()
+		// Refresh JWT if it is about to expire.
+	} else if tvdb.jwt.AboutToExpire() {
+		err = tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(APIEpisodeURL, id), nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tvdb.jwt.JWT))
+
+	if language != "" {
+		request.Header.Add("Accept-Language", language)
+	}
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiEpisodeResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	episode = apiResponse.Data
+	episode.tvdb = tvdb
 
 	return
 }

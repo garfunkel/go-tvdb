@@ -1,9 +1,9 @@
 package tvdb
 
 import (
-	"time"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
 )
 
 // pipeList type representing pipe-separated string values.
