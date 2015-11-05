@@ -88,6 +88,42 @@ func TestGetSeriesByID(t *testing.T) {
 	}
 }
 
+func TestGetSeriesEpisodes(t *testing.T) {
+	series, err := tvdb.GetSeriesByID(71663, "en")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	episodes, err := series.Episodes()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(episodes) < 649 {
+		t.Error("Can't retrive all episodes.")
+	}
+}
+
+func TestGetSeriesEpisodesPage(t *testing.T) {
+	series, err := tvdb.GetSeriesByID(71663, "en")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	episodes, err := series.EpisodesPage(5)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(episodes) != 100 {
+		t.Error("Episodes page lookup error.")
+	}
+}
+
 func TestGetSeriesActors(t *testing.T) {
 	series, err := tvdb.GetSeriesByID(71663, "en")
 

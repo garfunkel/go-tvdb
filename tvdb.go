@@ -39,6 +39,9 @@ const (
 	// Get series by ID API URL.
 	APISeriesURL = APIURL + "/series/%v"
 
+	// Get series episodes API URL.
+	APISeriesEpisodesURL = APISeriesURL + "/episodes"
+
 	// Get series actors API URL.
 	APISeriesActorsURL = APISeriesURL + "/actors"
 
@@ -118,6 +121,17 @@ type apiSearchSeriesResponse struct {
 
 type apiSeriesResponse struct {
 	Data Series `json:"data"`
+}
+
+type apiSeriesEpisodesResponse struct {
+	Data []Episode `json:"data"`
+	Links struct {
+		First uint64 `json:"first"`
+		Last uint64 `json:"last"`
+		Next uint64 `json:"next"`
+		Prev uint64 `json:"prev"`
+	} `json:"links"`
+	Errors []string `json:"errors"`
 }
 
 type apiSeriesActorsResponse struct {
