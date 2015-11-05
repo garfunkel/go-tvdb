@@ -18,10 +18,10 @@ type Episode struct {
 	ProductionCode    string   `json:"productionCode"`
 	ShowURL           string   `json:"showUrl"`
 	LastUpdated       unixTime `json:"lastUpdated"`
-	DvdDiscID         string   `json:"dvdDiscid"`
-	DvdSeason         uint64   `json:"dvdSeason"`
-	DvdEpisodeNumber  uint64   `json:"dvdEpisodeNumber"`
-	DvdChapter        string   `json:"dvdChapter"`
+	DVDDiscID         string   `json:"dvdDiscid"`
+	DVDSeason         uint64   `json:"dvdSeason"`
+	DVDEpisodeNumber  uint64   `json:"dvdEpisodeNumber"`
+	DVDChapter        string   `json:"dvdChapter"`
 	AbsoluteNumber    uint64   `json:"absoluteNumber"`
 	Filename          string   `json:"filename"`
 	SeriesID          uint64   `json:"seriesId"`

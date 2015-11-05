@@ -124,6 +124,24 @@ func TestGetSeriesEpisodesPage(t *testing.T) {
 	}
 }
 
+func TestGetSeriesEpisodeSummary(t *testing.T) {
+	series, err := tvdb.GetSeriesByID(71663, "en")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	summary, err := series.SeriesEpisodeSummary()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(summary.AiredSeasons) < 27 {
+		t.Error("Invalid series episode summary.")
+	}
+}
+
 func TestGetSeriesActors(t *testing.T) {
 	series, err := tvdb.GetSeriesByID(71663, "en")
 

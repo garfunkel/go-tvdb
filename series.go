@@ -34,6 +34,13 @@ type Series struct {
 	tvdb          *TheTVDB
 }
 
+type SeriesEpisodeSummary struct {
+	AiredSeasons []string `json:"airedSeasons"`
+	AiredEpisodes string `json:"airedEpisodes"`
+	DVDSeasons []string `json:"dvdSeasons"`
+	DVDEpisodes string `json:"dvdEpisodes"`
+}
+
 func (series *Series) Episodes() (episodes []Episode, err error) {
 	// Login again if JWT has expired.
 	if series.tvdb.jwt.Expired() {
@@ -122,6 +129,53 @@ func (series *Series) EpisodesPage(page int) (episodes []Episode, err error) {
 	for _, episode := range episodes {
 		episode.tvdb = series.tvdb
 	}
+
+	return
+}
+
+func (series *Series) SeriesEpisodeSummary() (summary SeriesEpisodeSummary, err error) {
+	// Login again if JWT has expired.
+	if series.tvdb.jwt.Expired() {
+		err = series.tvdb.Login()
+		// Refresh JWT if it is about to expire.
+	} else if series.tvdb.jwt.AboutToExpire() {
+		err = series.tvdb.RefreshToken()
+	}
+
+	if err != nil {
+		return
+	}
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(APISeriesEpisodeSummariesURL, series.ID), nil)
+
+	if err != nil {
+		return
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", series.tvdb.jwt.JWT))
+
+	response, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return
+	}
+
+	apiResponse := apiSeriesEpisodeSummaryResponse{}
+
+	err = json.Unmarshal(body, &apiResponse)
+
+	if err != nil {
+		return
+	}
+
+	summary = apiResponse.Data
 
 	return
 }

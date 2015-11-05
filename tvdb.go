@@ -42,6 +42,9 @@ const (
 	// Get series episodes API URL.
 	APISeriesEpisodesURL = APISeriesURL + "/episodes"
 
+	// Get series episode summary API URL.
+	APISeriesEpisodeSummariesURL = APISeriesEpisodesURL + "/summary"
+
 	// Get series actors API URL.
 	APISeriesActorsURL = APISeriesURL + "/actors"
 
@@ -132,6 +135,10 @@ type apiSeriesEpisodesResponse struct {
 		Prev uint64 `json:"prev"`
 	} `json:"links"`
 	Errors []string `json:"errors"`
+}
+
+type apiSeriesEpisodeSummaryResponse struct {
+	Data SeriesEpisodeSummary `json:"data"`
 }
 
 type apiSeriesActorsResponse struct {
